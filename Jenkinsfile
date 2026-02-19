@@ -33,7 +33,7 @@ pipeline {
         stage('Deploy NGINX Load Balancer') {
             steps {
                 sh '''
-                docker run -d --name nginx -p 8080:80 nginx
+                docker run -d --name nginx -p 8081:80 nginx
                 '''
             }
         }
