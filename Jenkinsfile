@@ -11,6 +11,7 @@ pipeline {
             steps {
                 sh '''
                 docker rm -f backend1 backend2 nginx || true
+                docker network rm mynetwork || true
                 docker rmi -f backend-app || true
                 docker build -t backend-app backend
                 '''
@@ -20,30 +21,29 @@ pipeline {
         stage('Deploy Backend Containers') {
             steps {
                 sh '''
+                docker network create mynetwork
+
                 if [ "$BACKEND_COUNT" = "1" ]; then
-                    docker run -d --name backend1 backend-app
+                    docker run -d --name backend1 --network mynetwork backend-app
                 else
-                    docker run -d --name backend1 backend-app
-                    docker run -d --name backend2 backend-app
+                    docker run -d --name backend1 --network mynetwork backend-app
+                    docker run -d --name backend2 --network mynetwork backend-app
                 fi
                 '''
             }
         }
 
         stage('Deploy NGINX Load Balancer') {
-    steps {
-        sh '''
-        docker rm -f nginx || true
-
-        docker run -d --name nginx \
-        --network mynetwork \
-        -p 8081:80 \
-        -v $PWD/nginx/default.conf:/etc/nginx/conf.d/default.conf \
-        nginx
-        '''
-    }
-}
-
+            steps {
+                sh '''
+                docker run -d --name nginx \
+                --network mynetwork \
+                -p 8081:80 \
+                -v $(pwd)/nginx/default.conf:/etc/nginx/conf.d/default.conf \
+                nginx
+                '''
+            }
+        }
     }
 
     post {
@@ -55,4 +55,3 @@ pipeline {
         }
     }
 }
-
