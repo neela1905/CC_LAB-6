@@ -33,19 +33,27 @@ pipeline {
             }
         }
 
-        stage('Deploy NGINX Load Balancer') {
+        stage('Build NGINX Image') {
     steps {
         sh '''
-        docker rm -f nginx || true
-
-        docker run -d --name nginx \
-        --network mynetwork \
-        -p 8081:80 \
-        -v /var/jenkins_home/workspace/LAB6-PIPELINE-NGINX/nginx/default.conf:/etc/nginx/conf.d/default.conf \
-        nginx
+        docker rmi -f custom-nginx || true
+        docker build -t custom-nginx nginx
         '''
     }
 }
+
+stage('Deploy NGINX Load Balancer') {
+    steps {
+        sh '''
+        docker rm -f nginx || true
+        docker run -d --name nginx \
+        --network mynetwork \
+        -p 8081:80 \
+        custom-nginx
+        '''
+    }
+}
+
 
     }
 
