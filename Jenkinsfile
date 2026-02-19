@@ -31,12 +31,19 @@ pipeline {
         }
 
         stage('Deploy NGINX Load Balancer') {
-            steps {
-                sh '''
-                docker run -d --name nginx -p 8081:80 nginx
-                '''
-            }
-        }
+    steps {
+        sh '''
+        docker rm -f nginx || true
+
+        docker run -d --name nginx \
+        --network mynetwork \
+        -p 8081:80 \
+        -v $PWD/nginx/default.conf:/etc/nginx/conf.d/default.conf \
+        nginx
+        '''
+    }
+}
+
     }
 
     post {
